@@ -27,6 +27,7 @@ errors = { }
 f = open(logfile, 'r')
 
 errorfile = 'error_message.csv'
+errorfile2 = 'error_message.txt'
 #вариант через sub новое выражение и его как ключ
 
 for log in f:
@@ -51,3 +52,69 @@ f.close()
 
 
 
+f = open(errorfile2, 'w')
+for error in errors:
+    a, b = error
+    f.write(str(a)+','+str(b)+"\n")
+f.close()
+
+####################################################################################
+import sqlite3
+
+conn = sqlite3.connect('emaildb3.sqlite')
+cur = conn.cursor()
+
+cur.execute('''
+DROP TABLE IF EXISTS Counts''')
+
+cur.execute('''
+CREATE TABLE Counts (org TEXT, count INTEGER)''')
+
+fname = 'error_message.txt'
+
+fh = open(fname)
+
+
+for line in fh:
+    
+    pieces = line.split()
+    #print(pieces)
+    email = pieces[0].split(',')
+
+    org = email[0]
+    x = email[1]   #значения 
+
+    #print(x)
+    # #print("email - ", email)
+
+
+    cur.execute('SELECT org FROM Counts WHERE org = ? ', (org,))
+    row = cur.fetchone()
+
+    if row is None:
+        cur.execute('''INSERT INTO Counts (org, count)
+                VALUES (?, ?)''', (org, x))
+        
+        #   INSERT INTO pages (title, url, theme, num) VALUES 
+        #   ('Amount of Information', 'amount-information', 1, 2);
+  
+      
+    #cur.execute('SELECT count FROM Counts WHERE count = ? ', (x,))
+    # row2 = cur.fetchone()
+
+    # if row2 is None:
+
+    #     cur.execute('''INSERT INTO Counts (count)
+    #             VALUES (?)''', (x,))
+    # else:
+    #     cur.execute('UPDATE Counts SET count = count + 1 WHERE org = ?', (org,))
+conn.commit()
+# # https://www.sqlite.org/lang_select.html
+sqlstr = 'SELECT org, count FROM Counts ORDER BY count DESC LIMIT 20'
+
+
+
+for row in cur.execute(sqlstr):
+    print(str(row[0]), row[1])
+
+cur.close()
